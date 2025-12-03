@@ -1,5 +1,3 @@
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyWebTest.Data;
@@ -10,9 +8,9 @@ namespace MyWebTest.Controllers
     [ApiController]
     public class HotelsController : ControllerBase
     {
-        private readonly HotelDbContext _context;
+        private readonly MyDbContext _context;
 
-        public HotelsController(HotelDbContext context)
+        public HotelsController(MyDbContext context)
         {
             _context = context;
         }

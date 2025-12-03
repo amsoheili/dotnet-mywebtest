@@ -1,7 +1,11 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MyWebTest.Configuration;
+using MyWebTest.Contracts;
 using MyWebTest.Data;
+using MyWebTest.Model.Country;
 
 namespace MyWebTest.Controllers
 {
@@ -9,58 +13,70 @@ namespace MyWebTest.Controllers
     [ApiController]
     public class CountriesController : ControllerBase
     {
-        private readonly HotelDbContext _context;
-        public CountriesController(HotelDbContext context)
+        private readonly ICountriesRepository _countriesRepository;
+        private readonly IMapper _mapper;
+        public CountriesController(
+            ICountriesRepository countriesRepository,
+            IMapper mapper)
         {
-            _context = context;
+            _countriesRepository = countriesRepository;
+            _mapper = mapper;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Country>>> Get()
+        public async Task<ActionResult<IEnumerable<GetCountryDto>>> Get()
         {
-            return Ok(await _context.Countries.ToListAsync());
+            var countries = await _countriesRepository.GetAllAsync();
+            var records = _mapper.Map<List<GetCountryDto>>(countries);
+            return Ok(records);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Country>> PostCountry(Country country)
+        public async Task<ActionResult<Country>> PostCountry(CreateCountryDto createCountry)
         {
-            _context.Countries.Add(country);
-            await _context.SaveChangesAsync();
+            var country = _mapper.Map<Country>(createCountry);
 
-            return CreatedAtAction("Post country", new { id = country.Id }, country);
+            await _countriesRepository.AddAsync(country);
+
+            return Ok("Good");
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Country>> GetCountry(int id)
+        public async Task<ActionResult<CountryDto>> GetCountry(int id)
         {
-            var country = await _context.Countries.FindAsync(id);
+            var country = await _countriesRepository.GetDetails(id);
+            if (country == null)
+            {
+                return NotFound();
+            }
+            return _mapper.Map<CountryDto>(country);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult> UpdateCountry(int id, UpdateCountryDto updateCountry)
+        {
+
+            if (id != updateCountry.Id)
+            {
+                return BadRequest("your so bad");
+            }
+            Country country;
+            try
+            {
+                country = await _countriesRepository.GetAsync(id);
+
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return NotFound();
+            }
 
             if (country == null)
             {
                 return NotFound();
             }
 
-            return country;
-        }
-
-        [HttpPut("{id}")]
-        public async Task<ActionResult<Country>> UpdateCountry(int id, Country country)
-        {
-            if (id != country.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(country).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return NotFound();
-            }
+            _mapper.Map(updateCountry, country);
 
             return NoContent();
         }
@@ -68,13 +84,7 @@ namespace MyWebTest.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCountry(int id)
         {
-            var country = await _context.Countries.FindAsync(id);
-            if (country == null)
-            {
-                return NotFound();
-            }
-            _context.Countries.Remove(country);
-            await _context.SaveChangesAsync();
+            await _countriesRepository.DeleteAsync(id);
             return NoContent();
         }
     }

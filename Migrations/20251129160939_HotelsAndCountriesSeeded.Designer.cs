@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace MyWebTest.Migrations
 {
-    [DbContext(typeof(HotelDbContext))]
+    [DbContext(typeof(MyDbContext))]
     [Migration("20251129160939_HotelsAndCountriesSeeded")]
     partial class HotelsAndCountriesSeeded
     {

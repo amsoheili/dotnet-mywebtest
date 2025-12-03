@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace MyWebTest.Migrations
 {
-    [DbContext(typeof(HotelDbContext))]
+    [DbContext(typeof(MyDbContext))]
     partial class HotelDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

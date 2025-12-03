@@ -2,9 +2,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MyWebTest.Data
 {
-    public class HotelDbContext : DbContext
+    public class MyDbContext : DbContext
     {
-        public HotelDbContext(DbContextOptions<HotelDbContext> options) : base(options)
+        public MyDbContext(DbContextOptions<MyDbContext> options) : base(options)
         {
         }
 
