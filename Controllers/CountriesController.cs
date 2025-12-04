@@ -60,16 +60,7 @@ namespace MyWebTest.Controllers
             {
                 return BadRequest("your so bad");
             }
-            Country country;
-            try
-            {
-                country = await _countriesRepository.GetAsync(id);
-
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return NotFound();
-            }
+            var country = await _countriesRepository.GetAsync(id);
 
             if (country == null)
             {
@@ -78,6 +69,15 @@ namespace MyWebTest.Controllers
 
             _mapper.Map(updateCountry, country);
 
+            try
+            {
+                await _countriesRepository.UpdateAsync(country);
+
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return NotFound();
+            }
             return NoContent();
         }
 

@@ -1,6 +1,9 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MyWebTest.Contracts;
 using MyWebTest.Data;
+using MyWebTest.Model.Hotel;
 
 namespace MyWebTest.Controllers
 {
@@ -8,28 +11,75 @@ namespace MyWebTest.Controllers
     [ApiController]
     public class HotelsController : ControllerBase
     {
-        private readonly MyDbContext _context;
+        private readonly IMapper _mapper;
 
-        public HotelsController(MyDbContext context)
+        private readonly IHotelsRepository _hotelsRepository;
+
+        public HotelsController(
+            IMapper mapper,
+            IHotelsRepository hotelsRepository
+        )
         {
-            _context = context;
+            _mapper = mapper;
+            _hotelsRepository = hotelsRepository;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Hotel>>> Get()
+        public async Task<ActionResult<IEnumerable<HotelDto>>> Get()
         {
-            return await _context.Hotels.ToListAsync();
+            var hotels = await _hotelsRepository.GetAllAsync();
+            return _mapper.Map<List<HotelDto>>(hotels);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Hotel>> Get(int id)
+        public async Task<ActionResult<HotelDto>> Get(int id)
         {
-            var hotel = await _context.Hotels.FindAsync(id);
+            var hotel = await _hotelsRepository.GetAsync(id);
             if (hotel == null)
             {
                 return NotFound();
             }
-            return hotel;
+            return _mapper.Map<HotelDto>(hotel);
+        }
+
+
+        [HttpPost]
+        public async Task<ActionResult> AddHotel(CreateHotelDto hotel)
+        {
+            var myHotel = _mapper.Map<Hotel>(hotel);
+            await _hotelsRepository.AddAsync(myHotel);
+            return Ok();
+        }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult> UpdateHotel(int id, UpdateHotelDto updateHotelDto)
+        {
+            if (id != updateHotelDto.Id)
+            {
+                return BadRequest();
+            }
+            var hotel = await _hotelsRepository.GetAsync(id);
+            if (hotel == null)
+            {
+                return NotFound();
+            }
+            _mapper.Map(updateHotelDto, hotel);
+            try
+            {
+                await _hotelsRepository.UpdateAsync(hotel);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return NotFound();
+            }
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteHotel(int id)
+        {
+            await _hotelsRepository.DeleteAsync(id);
+            return Ok("successfully deleted");
         }
 
     }
